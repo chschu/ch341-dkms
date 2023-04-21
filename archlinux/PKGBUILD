@@ -1,0 +1,32 @@
+pkgname=ch341-dkms
+_pkgbase="${pkgname%-*}"
+pkgver=1
+pkgrel=1
+pkgdesc="DKMS package for the extended CH341 USB serial driver based on the Linux Kernel"
+arch=('any')
+url="https://github.com/chschu/ch341-ext"
+license=('GPL')
+depends=('dkms')
+makedepends=('git' 'sed')
+source=("git+https://github.com/chschu/ch341-ext.git#commit=cbcf8f28c2e7beb9956e2d7a77f27a11ef2f4361"
+        "dkms.conf")
+sha256sums=('SKIP'
+            '88bb707197bc8e1021cc82beabceb0d3f0cfe222c9813381da8dd130fc0a2a1f')
+
+pkgver() {
+	cd "ch341-ext"
+	printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"
+}
+
+package() {
+	# copy dkms.conf
+	install -Dm644 dkms.conf "$pkgdir/usr/src/$_pkgbase-$pkgver/dkms.conf"
+
+	# replace placeholders in dkms.conf
+	sed -e "s/@PACKAGE_NAME@/$_pkgbase/" \
+	    -e "s/@PACKAGE_VERSION@/$pkgver/" \
+	    -i "$pkgdir/usr/src/$_pkgbase-$pkgver/dkms.conf"
+
+	# copy patched module sources
+	cp -r "ch341-ext/." "$pkgdir/usr/src/$_pkgbase-$pkgver/"
+}
